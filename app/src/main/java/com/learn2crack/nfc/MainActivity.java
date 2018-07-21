@@ -49,11 +49,14 @@ public class MainActivity extends AppCompatActivity implements Listener{
         sessionDao=((AppController) getApplication()).getDaoSession();
 
         UserDao ud=sessionDao.getUserDao();
-        List<User> items = ud.loadAll();
+        List<User> items = ud.queryRaw("where nfc_id=?","11001");
+
+        //List<User> listATableObj = ud.queryRawCreate(", BTable BT WHERE BT.nameid = T.nameid").list();
 
         for(User u: items){
             Toast.makeText(this, u.getPhone_number(),Toast.LENGTH_LONG).show();
         }
+
 
         User u= new User();
         u.insertItem(1100,"989890", 30,sessionDao);
