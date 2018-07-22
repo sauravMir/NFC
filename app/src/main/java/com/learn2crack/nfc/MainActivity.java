@@ -208,8 +208,24 @@ public class MainActivity extends AppCompatActivity implements Listener {
     }
 
 
+    protected void startNfcSettingsActivity() {
+        if (android.os.Build.VERSION.SDK_INT >= 16) {
+            startActivity(new Intent(android.provider.Settings.ACTION_NFC_SETTINGS));
+        } else {
+            startActivity(new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS));
+        }
+    }
+
     //// PERMISSION HANDLING /////////////////////////////////
     private void handlePermission(){
+        NfcAdapter nfcAdpt = NfcAdapter.getDefaultAdapter(this);
+        if(nfcAdpt!=null) {
+            if (nfcAdpt.isEnabled()) {
+                //Nfc settings are enabled
+            } else {
+                startNfcSettingsActivity();
+            }
+        }
         reqperm.requestPermission(this,
                permission
         , 123, new RequestPermissionHandler.RequestPermissionListener() {
