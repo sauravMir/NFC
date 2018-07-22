@@ -50,6 +50,8 @@ public class MainActivity extends AppCompatActivity implements Listener{
 
     private NfcAdapter mNfcAdapter;
     DaoSession sessionDao;
+    String[] permission= {"android.permission.NFC","android.permission.ACCESS_NETWORK_STATE","android.permission.INTERNET",
+            "android.permission.RECEIVE_BOOT_COMPLETED","android.permission.ACCESS_WIFI_STATE"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
 
 
         User u= new User();
-        u.insertItem(1100,"989890", 30,sessionDao);
+        u.insertItem("1100","989890", 30,sessionDao);
         initViews();
         initNFC();
         syncproject();

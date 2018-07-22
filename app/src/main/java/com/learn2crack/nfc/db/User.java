@@ -15,7 +15,9 @@ public class User {
 
     @Id(autoincrement = true)
     private Long id;
-    private int nfc_id;
+
+    @NotNull
+    private String nfc_id;
     private String phone_number;
     private Integer ride_left;
 
@@ -31,7 +33,7 @@ public class User {
     }
 
     @Generated
-    public User(Long id, int nfc_id, String phone_number, Integer ride_left) {
+    public User(Long id, String nfc_id, String phone_number, Integer ride_left) {
         this.id = id;
         this.nfc_id = nfc_id;
         this.phone_number = phone_number;
@@ -46,11 +48,13 @@ public class User {
         this.id = id;
     }
 
-    public int getNfc_id() {
+    @NotNull
+    public String getNfc_id() {
         return nfc_id;
     }
 
-    public void setNfc_id(int nfc_id) {
+    /** Not-null value; ensure this value is available before it is saved to the database. */
+    public void setNfc_id(@NotNull String nfc_id) {
         this.nfc_id = nfc_id;
     }
 
@@ -72,7 +76,7 @@ public class User {
 
     // KEEP METHODS - put your custom methods here
 
-    public void updateItem(int nfc_id ,String phone, int ride_left, DaoSession daoSession){
+    public void updateItem(String nfc_id ,String phone, int ride_left, DaoSession daoSession){
         UserDao groceryDao = daoSession.getUserDao();
         User grocery = new User();
         grocery.setNfc_id(nfc_id);
@@ -81,7 +85,7 @@ public class User {
         groceryDao.saveInTx(grocery);
     }
 
-    public void insertItem(int nfc_id ,String phone, int ride_left, DaoSession daoSession){
+    public void insertItem(String nfc_id ,String phone, int ride_left, DaoSession daoSession){
         UserDao groceryDao = daoSession.getUserDao();
         User grocery = new User();
         grocery.setNfc_id(nfc_id);

@@ -28,7 +28,7 @@ public class MyGenerator {
     private static Entity addUserEntities(final Schema schema) {
         Entity user = schema.addEntity("User");
         user.addIdProperty().primaryKey().autoincrement();
-        user.addIntProperty("nfc_id").notNull();
+        user.addStringProperty("nfc_id").notNull();
         user.addStringProperty("phone_number");
         user.addIntProperty("ride_left");
 

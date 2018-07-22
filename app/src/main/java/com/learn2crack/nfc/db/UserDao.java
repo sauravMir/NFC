@@ -23,7 +23,7 @@ public class UserDao extends AbstractDao<User, Long> {
      */
     public static class Properties {
         public final static Property Id = new Property(0, Long.class, "id", true, "_id");
-        public final static Property Nfc_id = new Property(1, int.class, "nfc_id", false, "NFC_ID");
+        public final static Property Nfc_id = new Property(1, String.class, "nfc_id", false, "NFC_ID");
         public final static Property Phone_number = new Property(2, String.class, "phone_number", false, "PHONE_NUMBER");
         public final static Property Ride_left = new Property(3, Integer.class, "ride_left", false, "RIDE_LEFT");
     }
@@ -42,7 +42,7 @@ public class UserDao extends AbstractDao<User, Long> {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"USER\" (" + //
                 "\"_id\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
-                "\"NFC_ID\" INTEGER NOT NULL ," + // 1: nfc_id
+                "\"NFC_ID\" TEXT NOT NULL ," + // 1: nfc_id
                 "\"PHONE_NUMBER\" TEXT," + // 2: phone_number
                 "\"RIDE_LEFT\" INTEGER);"); // 3: ride_left
     }
@@ -61,7 +61,7 @@ public class UserDao extends AbstractDao<User, Long> {
         if (id != null) {
             stmt.bindLong(1, id);
         }
-        stmt.bindLong(2, entity.getNfc_id());
+        stmt.bindString(2, entity.getNfc_id());
  
         String phone_number = entity.getPhone_number();
         if (phone_number != null) {
@@ -82,7 +82,7 @@ public class UserDao extends AbstractDao<User, Long> {
         if (id != null) {
             stmt.bindLong(1, id);
         }
-        stmt.bindLong(2, entity.getNfc_id());
+        stmt.bindString(2, entity.getNfc_id());
  
         String phone_number = entity.getPhone_number();
         if (phone_number != null) {
@@ -104,7 +104,7 @@ public class UserDao extends AbstractDao<User, Long> {
     public User readEntity(Cursor cursor, int offset) {
         User entity = new User( //
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
-            cursor.getInt(offset + 1), // nfc_id
+            cursor.getString(offset + 1), // nfc_id
             cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // phone_number
             cursor.isNull(offset + 3) ? null : cursor.getInt(offset + 3) // ride_left
         );
@@ -114,7 +114,7 @@ public class UserDao extends AbstractDao<User, Long> {
     @Override
     public void readEntity(Cursor cursor, User entity, int offset) {
         entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
-        entity.setNfc_id(cursor.getInt(offset + 1));
+        entity.setNfc_id(cursor.getString(offset + 1));
         entity.setPhone_number(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
         entity.setRide_left(cursor.isNull(offset + 3) ? null : cursor.getInt(offset + 3));
      }

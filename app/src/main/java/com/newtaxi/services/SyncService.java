@@ -14,6 +14,8 @@ import com.android.volley.toolbox.Volley;
 import com.learn2crack.nfc.AppController;
 import com.learn2crack.nfc.db.DaoSession;
 import com.learn2crack.nfc.db.User;
+import com.learn2crack.nfc.db.UserDao;
+import com.newtaxi.NetworkConnectionTest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -30,6 +32,7 @@ public class SyncService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         DaoSession sessionDao=((AppController) getApplication()).getDaoSession();
+        syncproject(sessionDao);
 
         return Service.START_STICKY;
     }
@@ -40,40 +43,45 @@ public class SyncService extends Service {
     public void syncproject(DaoSession sessionDao){
         String url = "http://hpmd.cayaconstructs.com/data/sync_data";
 
-        JsonArrayRequest jsonRequest = new JsonArrayRequest
-                (Request.Method.GET, url, null, new Response.Listener<JSONArray>()  {
-                    @Override
-                    public void onResponse(JSONArray response) {
-                        // the response is already constructed as a JSONArray!
-                        if (response != null && response.length()>0){
+        if(NetworkConnectionTest.isNetworkConnected(this)) {
+            JsonArrayRequest jsonRequest = new JsonArrayRequest
+                    (Request.Method.GET, url, null, new Response.Listener<JSONArray>() {
+                        @Override
+                        public void onResponse(JSONArray response) {
+                            // the response is already constructed as a JSONArray!
+                            if (response != null && response.length() > 0) {
 
-                            for (int i = 0; i < response.length(); i++) {
+                                UserDao ud = sessionDao.getUserDao();
+                                ud.deleteAll();
+                                for (int i = 0; i < response.length(); i++) {
 
-                                try {
-                                    JSONObject jobj= (JSONObject) response.get(i);
+                                    try {
+                                        JSONObject jobj = (JSONObject) response.get(i);
 
-                                    //response = response.getJSONObject("args");
-                                    String phone = jobj.getString("phone_number"),
-                                            nfc_id = jobj.getString("nfc_id");
-                                    int rideLeft= jobj.getInt("ride_left");
+                                        //response = response.getJSONObject("args");
+                                        String phone = jobj.getString("phone_number"),
+                                                nfc_id = jobj.getString("nfc_id");
+                                        int rideLeft = jobj.getInt("ride_left");
 
-                                    User s = new User();
+                                        User us = new User();
+                                        us.insertItem(nfc_id, phone, rideLeft, sessionDao);
 
-                                    Log.e("Site: " + phone + "\nNetwork: " + nfc_id, "");
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
+                                        Log.e("Site: " + phone + "\nNetwork: " + nfc_id, "");
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
                             }
                         }
-                    }
-                }, new Response.ErrorListener() {
+                    }, new Response.ErrorListener() {
 
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        error.printStackTrace();
-                    }
-                });
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            error.printStackTrace();
+                        }
+                    });
 
-        Volley.newRequestQueue(this).add(jsonRequest);
+            Volley.newRequestQueue(this).add(jsonRequest);
+        }
     }
 }
