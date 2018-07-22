@@ -11,27 +11,14 @@
     android:gravity="center"
     tools:context="com.learn2crack.nfc.MainActivity">
 
-    <EditText
-        android:id="@+id/et_message"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/hint_message"/>
 
-    <Button
-        android:id="@+id/btn_write"
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/et_message"
-        android:layout_marginTop="@dimen/activity_horizontal_margin"
-        android:text="@string/message_write_tag"
-        style="@style/Widget.AppCompat.Button.Colored"/>
-
-    <Button
-        android:id="@+id/btn_read"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/btn_write"
-        android:layout_marginTop="@dimen/activity_horizontal_margin"
-        android:text="@string/message_read_tag"
-        style="@style/Widget.AppCompat.Button.Colored"/>
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_centerInParent="true"
+        android:textSize="25sp"
+        android:text="Please Tap The NFC Tag" />
 </RelativeLayout>

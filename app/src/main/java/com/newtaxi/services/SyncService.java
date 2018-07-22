@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -33,14 +34,18 @@ public class SyncService extends Service {
 
         DaoSession sessionDao=((AppController) getApplication()).getDaoSession();
         syncproject(sessionDao);
-
+        //makeToast("Service Started");
         return Service.START_STICKY;
     }
 
+    void makeToast(String str){
+        Toast.makeText(this,str, Toast.LENGTH_LONG).show();
+    }
 
 
     //////// NETWORK CALLS ////////////////////////
     public void syncproject(DaoSession sessionDao){
+        Log.e("Syncing","Please wait");
         String url = "http://hpmd.cayaconstructs.com/data/sync_data";
 
         if(NetworkConnectionTest.isNetworkConnected(this)) {

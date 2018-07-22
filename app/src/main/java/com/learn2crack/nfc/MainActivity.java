@@ -1,13 +1,20 @@
 package com.learn2crack.nfc;
 
 import android.Manifest;
+import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.nfc.FormatException;
+import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.Ndef;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -15,6 +22,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -26,15 +34,23 @@ import com.android.volley.toolbox.Volley;
 import com.learn2crack.nfc.db.DaoSession;
 import com.learn2crack.nfc.db.User;
 import com.learn2crack.nfc.db.UserDao;
+import com.newtaxi.NetworkConnectionTest;
+import com.newtaxi.services.SyncService;
+import com.newtaxi.util.RequestPermissionHandler;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity implements Listener{
+public class MainActivity extends AppCompatActivity implements Listener {
     
     public static final String TAG = MainActivity.class.getSimpleName();
 
@@ -53,71 +69,60 @@ public class MainActivity extends AppCompatActivity implements Listener{
     String[] permission= {"android.permission.NFC","android.permission.ACCESS_NETWORK_STATE","android.permission.INTERNET",
             "android.permission.RECEIVE_BOOT_COMPLETED","android.permission.ACCESS_WIFI_STATE"};
 
+    RequestPermissionHandler reqperm;
+    boolean blockUI_ifNoPer=true;
+    ProgressDialog pd;
+    SharedPreferences sp;
+    SharedPreferences.Editor ed;
+    final String Pref="pref";
+    final String Mode="mode";
+    RelativeLayout rl;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        rl=(RelativeLayout) findViewById(R.id.activity_main);
+        rl.setOnClickListener(view->handlePermission());
         sessionDao=((AppController) getApplication()).getDaoSession();
 
-        UserDao ud=sessionDao.getUserDao();
-        List<User> items = ud.queryRaw("where nfc_id=?","1101");
+        reqperm=new RequestPermissionHandler();
 
-        //List<User> listATableObj = ud.queryRawCreate(", BTable BT WHERE BT.nameid = T.nameid").list();
+        handlePermission();
 
-        for(User u: items){
-            Toast.makeText(this, u.getPhone_number(),Toast.LENGTH_LONG).show();
-        }
+        sp=getSharedPreferences(Pref,0);
+        ed=sp.edit();
+
+        int mode=sp.getInt(Mode,0);
+        if(mode==0)
+        resetServiceAlarm();
 
 
-        User u= new User();
-        u.insertItem("1100","989890", 30,sessionDao);
-        initViews();
+        pd=new ProgressDialog(this);
+        pd.setTitle("Please Wait...");
+        pd.setCancelable(false);
+
+//        UserDao ud=sessionDao.getUserDao();
+//        List<User> items = ud.queryRaw("where nfc_id=?","1101");
+//
+//        //List<User> listATableObj = ud.queryRawCreate(", BTable BT WHERE BT.nameid = T.nameid").list();
+//
+//        for(User u: items){
+//            Toast.makeText(this, u.getPhone_number(),Toast.LENGTH_LONG).show();
+//        }
+//
+//
+//        User u= new User();
+//        u.insertItem("12321","989890", 30,sessionDao);
+
         initNFC();
-        syncproject();
     }
 
-    private void initViews() {
-
-        mEtMessage = (EditText) findViewById(R.id.et_message);
-        mBtWrite = (Button) findViewById(R.id.btn_write);
-        mBtRead = (Button) findViewById(R.id.btn_read);
-
-        mBtWrite.setOnClickListener(view -> showWriteFragment());
-        mBtRead.setOnClickListener(view -> showReadFragment());
-    }
 
     private void initNFC(){
-
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
     }
 
-
-    private void showWriteFragment() {
-
-        isWrite = true;
-
-        mNfcWriteFragment = (NFCWriteFragment) getFragmentManager().findFragmentByTag(NFCWriteFragment.TAG);
-
-        if (mNfcWriteFragment == null) {
-
-            mNfcWriteFragment = NFCWriteFragment.newInstance();
-        }
-        mNfcWriteFragment.show(getFragmentManager(),NFCWriteFragment.TAG);
-
-    }
-
-    private void showReadFragment() {
-
-        mNfcReadFragment = (NFCReadFragment) getFragmentManager().findFragmentByTag(NFCReadFragment.TAG);
-
-        if (mNfcReadFragment == null) {
-
-            mNfcReadFragment = NFCReadFragment.newInstance();
-        }
-        mNfcReadFragment.show(getFragmentManager(),NFCReadFragment.TAG);
-
-    }
 
     @Override
     public void onDialogDisplayed() {
@@ -161,86 +166,41 @@ public class MainActivity extends AppCompatActivity implements Listener{
         Log.d(TAG, "onNewIntent: "+intent.getAction());
 
         if(tag != null) {
-            Toast.makeText(this, getString(R.string.message_tag_detected), Toast.LENGTH_SHORT).show();
             Ndef ndef = Ndef.get(tag);
-
-            if (isDialogDisplayed) {
-
-                if (isWrite) {
-
-                    String messageToWrite = mEtMessage.getText().toString();
-                    mNfcWriteFragment = (NFCWriteFragment) getFragmentManager().findFragmentByTag(NFCWriteFragment.TAG);
-                    mNfcWriteFragment.onNfcDetected(ndef,messageToWrite);
-
-                } else {
-
                     mNfcReadFragment = (NFCReadFragment)getFragmentManager().findFragmentByTag(NFCReadFragment.TAG);
-                    mNfcReadFragment.onNfcDetected(ndef);
-                }
+
+                    if(!blockUI_ifNoPer && ndef!=null)
+                    readFromNFC(ndef);
+                    else
+                       makeToast("Please Grant All Permissions.");
+
             }
         }
-    }
-
-    final int req=1100;
-    void permissionWorks(){
-        // Here, thisActivity is the current activity
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.READ_CONTACTS)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Permission is not granted
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.READ_CONTACTS)) {
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-            } else {
-                // No explanation needed; request the permission
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_NETWORK_STATE,Manifest.permission.NFC},
-                        req);
-
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
-            }
-        } else {
-            // Permission has already been granted
-        }
-    }
 
 
-    //////// NETWORK CALLS ////////////////////////
-    public void syncproject(){
-        String url = "http://hpmd.cayaconstructs.com/data/sync_data";
+            //////////// NETWORL CALL///////////////////
+    public void bookingSync( String nfcId){
+        String url = "http://hpmd.cayaconstructs.com/data/booking?nfc_id="+nfcId;
 
-        JsonArrayRequest jsonRequest = new JsonArrayRequest
-                (Request.Method.GET, url, null, new Response.Listener<JSONArray>()  {
+        JsonObjectRequest jsonRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>()  {
                     @Override
-                    public void onResponse(JSONArray response) {
+                    public void onResponse(JSONObject response) {
                         // the response is already constructed as a JSONArray!
                         if (response != null){
+                            makeToast("Booking Successful");
+                        }else{
+                            makeToast("Could not register");
+                        }
 
-                            for (int i = 0; i < response.length(); i++) {
-
-                                try {
-                                    JSONObject jobj= (JSONObject) response.get(i);
-                                    //response = response.getJSONObject("args");
-                                    String phone = jobj.getString("phone_number"),
-                                            nfc_id = jobj.getString("nfc_id");
-                                    Log.e("Site: " + phone + "\nNetwork: " + nfc_id, "");
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                    }
+                        pd.dismiss();
                     }
                 }, new Response.ErrorListener() {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         error.printStackTrace();
+                        pd.dismiss();
                     }
                 });
 
@@ -248,4 +208,135 @@ public class MainActivity extends AppCompatActivity implements Listener{
     }
 
 
+    //// PERMISSION HANDLING /////////////////////////////////
+    private void handlePermission(){
+        reqperm.requestPermission(this,
+               permission
+        , 123, new RequestPermissionHandler.RequestPermissionListener() {
+            @Override
+            public void onSuccess() {
+                //Toast.makeText(MainActivity.this, "request permission success", Toast.LENGTH_SHORT).show();
+                blockUI_ifNoPer=false;
+            }
+
+            @Override
+            public void onFailed() {
+                Toast.makeText(MainActivity.this, "Please Give All The Permissions For Using The App", Toast.LENGTH_SHORT).show();
+                blockUI_ifNoPer=true;
+            }
+        });
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        reqperm.onRequestPermissionsResult(requestCode, permissions,
+                grantResults);
+    }
+
+    ///////////// NFC /////////////
+    private void readFromNFC(Ndef ndef) {
+        String Nfcmessage="";
+        try {
+            ndef.connect();
+            NdefMessage ndefMessage = ndef.getNdefMessage();
+            if(ndefMessage!=null) {
+                byte[] payload=ndefMessage.getRecords()[0].getPayload();
+                String textEncoding = ((payload[0] & 128) == 0) ? "UTF-8" : "UTF-16"; // Get the Text Encoding
+                int languageCodeLength = payload[0] & 0063; // Get the Language Code, e.g. "en"
+                // String languageCode = new String(payload, 1, languageCodeLength, "US-ASCII");
+
+                try {
+                    // Get the Text
+                    Nfcmessage = new String(payload, languageCodeLength + 1, payload.length - languageCodeLength - 1, textEncoding);
+                } catch (UnsupportedEncodingException e) {
+                    Log.e("UnsupportedEncoding", e.toString());
+                }
+                //Nfcmessage = new String(ndefMessage.getRecords()[0].getPayload());
+
+            }
+            Log.d(TAG, "readFromNFC: "+Nfcmessage);
+
+            //validation
+            try{
+                long nfc=Long.parseLong(Nfcmessage);
+                User u=new User();
+                u=u.isValidNFC(Nfcmessage, sessionDao);
+                if(u!=null){
+                    //the tag is in db so deduct and update
+                    if(NetworkConnectionTest.isNetworkConnected(this)){
+                        if(u.getRide_left()>0){
+                            u.setRide_left(u.getRide_left()-1);
+                            u.updateItem(u,sessionDao);
+                            pd.show();
+                            makeToast("Rides Left: "+String.valueOf(u.getRide_left()));
+                            bookingSync(u.getNfc_id());
+                        }else{
+                            makeToast("Please Recharge No Rides Left");
+                        }
+
+                    }else{
+                        makeToast("No Internet Connection");
+                    }
+
+
+                }else{
+                    //send for registration
+                    Intent in=new Intent(this, RegisterActivity.class);
+                    in.putExtra("nfc_id",Nfcmessage);
+                    startActivity(in);
+                    finish();
+                }
+
+            }catch (NumberFormatException e){
+                e.printStackTrace();
+                makeToast("Wrong NFC Tag");
+            }
+            ndef.close();
+
+        } catch (IOException | FormatException e) {
+            e.printStackTrace();
+
+        }
+    }
+
+    ////////////// ALRM SET UP ////////////////
+
+    public static int restartServiceMiliSec=900000;
+    public static int ServiceCode=1000;
+
+    void removeOldAlarm(){
+        AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+
+        Intent alarmIntent = new Intent(this, SyncService.class);
+        PendingIntent pendingIntent = PendingIntent.getService(this, ServiceCode, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        alarmManager.cancel(pendingIntent);
+        pendingIntent.cancel();
+    }
+    public void resetServiceAlarm(){
+        AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, SyncService.class);
+        PendingIntent pendingIntent;
+
+        pendingIntent = PendingIntent.getService(this, ServiceCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+
+
+        long l=System.currentTimeMillis();
+        alarmManager.setRepeating(AlarmManager.RTC, l+restartServiceMiliSec,restartServiceMiliSec,
+                    pendingIntent);
+
+        //save it in shared pref
+
+        ed.putInt(Mode,1);
+        ed.commit();
+    }
+
+
+    void makeToast(String str){
+        Toast.makeText(this,str, Toast.LENGTH_LONG).show();
+    }
 }
