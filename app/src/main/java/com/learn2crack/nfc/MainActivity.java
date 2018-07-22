@@ -17,9 +17,19 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.learn2crack.nfc.db.DaoSession;
 import com.learn2crack.nfc.db.User;
 import com.learn2crack.nfc.db.UserDao;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.List;
 
@@ -49,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
         sessionDao=((AppController) getApplication()).getDaoSession();
 
         UserDao ud=sessionDao.getUserDao();
-        List<User> items = ud.queryRaw("where nfc_id=?","11001");
+        List<User> items = ud.queryRaw("where nfc_id=?","1101");
 
         //List<User> listATableObj = ud.queryRawCreate(", BTable BT WHERE BT.nameid = T.nameid").list();
 
@@ -62,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
         u.insertItem(1100,"989890", 30,sessionDao);
         initViews();
         initNFC();
+        syncproject();
     }
 
     private void initViews() {
@@ -196,5 +207,43 @@ public class MainActivity extends AppCompatActivity implements Listener{
             // Permission has already been granted
         }
     }
+
+
+    //////// NETWORK CALLS ////////////////////////
+    public void syncproject(){
+        String url = "http://hpmd.cayaconstructs.com/data/sync_data";
+
+        JsonArrayRequest jsonRequest = new JsonArrayRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONArray>()  {
+                    @Override
+                    public void onResponse(JSONArray response) {
+                        // the response is already constructed as a JSONArray!
+                        if (response != null){
+
+                            for (int i = 0; i < response.length(); i++) {
+
+                                try {
+                                    JSONObject jobj= (JSONObject) response.get(i);
+                                    //response = response.getJSONObject("args");
+                                    String phone = jobj.getString("phone_number"),
+                                            nfc_id = jobj.getString("nfc_id");
+                                    Log.e("Site: " + phone + "\nNetwork: " + nfc_id, "");
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                    }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        error.printStackTrace();
+                    }
+                });
+
+        Volley.newRequestQueue(this).add(jsonRequest);
+    }
+
 
 }
