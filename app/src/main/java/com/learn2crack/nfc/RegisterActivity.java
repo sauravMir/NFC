@@ -30,7 +30,7 @@ import org.json.JSONObject;
 public class RegisterActivity extends Activity {
 
     EditText et_phone;
-    String firstFour="6789";
+    String firstFour="8800";
     String nfcId="";
     Button submit_bt;
     public static int RideLeft_MAX=30;

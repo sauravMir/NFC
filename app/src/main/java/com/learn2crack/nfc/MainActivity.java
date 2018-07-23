@@ -14,6 +14,7 @@ import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.Ndef;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -23,6 +24,7 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -77,12 +79,15 @@ public class MainActivity extends AppCompatActivity implements Listener {
     final String Pref="pref";
     final String Mode="mode";
     RelativeLayout rl;
+    TextView t;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         rl=(RelativeLayout) findViewById(R.id.activity_main);
+        t=(TextView) findViewById(R.id.textView);
+
         rl.setOnClickListener(view->handlePermission());
         sessionDao=((AppController) getApplication()).getDaoSession();
 
@@ -159,22 +164,55 @@ public class MainActivity extends AppCompatActivity implements Listener {
             mNfcAdapter.disableForegroundDispatch(this);
     }
 
+    private String ByteArrayToHexString(byte [] inarray) {
+        int i, j, in;
+        String [] hex = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
+        String out= "";
+
+        for(j = 0 ; j < inarray.length ; ++j)
+        {
+            in = (int) inarray[j] & 0xff;
+            i = (in >> 4) & 0x0f;
+            out += hex[i];
+            i = in & 0x0f;
+            out += hex[i];
+        }
+        return out;
+    }
     @Override
     protected void onNewIntent(Intent intent) {
-        Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+        //Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_ID);
 
         Log.d(TAG, "onNewIntent: "+intent.getAction());
+       // String s="";
+//        if (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
+//            if(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID)!=null)
+//             s+="\n ID: "+ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID));
+//            else
+//                s+="\n ID :: NuLL";
+//            t.setText(s);
+//        }
 
-        if(tag != null) {
-            Ndef ndef = Ndef.get(tag);
-                    mNfcReadFragment = (NFCReadFragment)getFragmentManager().findFragmentByTag(NFCReadFragment.TAG);
+//        if (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
+//            if(intent.getByteArrayExtra(NfcAdapter.EXTRA_TAG) !=null)
+//            s+="\n Tag"+ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_TAG));
+//            else
+//                s+="\n Tag :: NuLL";
+//            t.setText(s);
+//        }
 
-                    if(!blockUI_ifNoPer && ndef!=null)
-                    readFromNFC(ndef);
-                    else
-                       makeToast("Please Grant All Permissions.");
-
+        if (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
+            if (intent.getByteArrayExtra(NfcAdapter.EXTRA_ID) != null)
+            {
+                String ss= ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID));
+                if(!blockUI_ifNoPer) {
+                        readFromNFC(ss);
+                }
+                else
+                    makeToast("Please Grant All Permissions.");
             }
+        }
+
         }
 
 
@@ -226,21 +264,26 @@ public class MainActivity extends AppCompatActivity implements Listener {
                 startNfcSettingsActivity();
             }
         }
-        reqperm.requestPermission(this,
-               permission
-        , 123, new RequestPermissionHandler.RequestPermissionListener() {
-            @Override
-            public void onSuccess() {
-                //Toast.makeText(MainActivity.this, "request permission success", Toast.LENGTH_SHORT).show();
-                blockUI_ifNoPer=false;
-            }
 
-            @Override
-            public void onFailed() {
-                Toast.makeText(MainActivity.this, "Please Give All The Permissions For Using The App", Toast.LENGTH_SHORT).show();
-                blockUI_ifNoPer=true;
-            }
-        });
+        if(Build.VERSION.SDK_INT>= Build.VERSION_CODES.M) {
+            reqperm.requestPermission(this,
+                    permission
+                    , 123, new RequestPermissionHandler.RequestPermissionListener() {
+                        @Override
+                        public void onSuccess() {
+                            //Toast.makeText(MainActivity.this, "request permission success", Toast.LENGTH_SHORT).show();
+                            blockUI_ifNoPer = false;
+                        }
+
+                        @Override
+                        public void onFailed() {
+                            Toast.makeText(MainActivity.this, "Please Give All The Permissions For Using The App", Toast.LENGTH_SHORT).show();
+                            blockUI_ifNoPer = true;
+                        }
+                    });
+        }else{
+            blockUI_ifNoPer = false;
+        }
 
     }
 
@@ -253,10 +296,10 @@ public class MainActivity extends AppCompatActivity implements Listener {
     }
 
     ///////////// NFC /////////////
-    private void readFromNFC(Ndef ndef) {
-        String Nfcmessage="";
-        try {
-            ndef.connect();
+    private void readFromNFC(String str) {
+        String Nfcmessage=str;
+
+       /*     ndef.connect();
             NdefMessage ndefMessage = ndef.getNdefMessage();
             if(ndefMessage!=null) {
                 byte[] payload=ndefMessage.getRecords()[0].getPayload();
@@ -273,11 +316,12 @@ public class MainActivity extends AppCompatActivity implements Listener {
                 //Nfcmessage = new String(ndefMessage.getRecords()[0].getPayload());
 
             }
+            */
             Log.d(TAG, "readFromNFC: "+Nfcmessage);
 
             //validation
             try{
-                long nfc=Long.parseLong(Nfcmessage);
+                //long nfc=Long.parseLong(Nfcmessage);
                 User u=new User();
                 u=u.isValidNFC(Nfcmessage, sessionDao);
                 if(u!=null){
@@ -310,12 +354,9 @@ public class MainActivity extends AppCompatActivity implements Listener {
                 e.printStackTrace();
                 makeToast("Wrong NFC Tag");
             }
-            ndef.close();
+            //ndef.close();
 
-        } catch (IOException | FormatException e) {
-            e.printStackTrace();
 
-        }
     }
 
     ////////////// ALRM SET UP ////////////////
