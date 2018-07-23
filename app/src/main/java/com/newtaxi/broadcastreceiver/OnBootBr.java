@@ -56,7 +56,7 @@ public class OnBootBr extends BroadcastReceiver {
 
         //////////*********** For 1min PostBR ******////////////
         AlarmManager alarmManager2 = (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
-        Intent intent2 = new Intent(ctx, SyncService.class);
+        Intent intent2 = new Intent(ctx, UpdateBR.class);
         PendingIntent pendingIntent2;
 
         pendingIntent2 = PendingIntent.getBroadcast(ctx, MainActivity.BroadcastCode, intent2,

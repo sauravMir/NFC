@@ -37,6 +37,7 @@ import com.learn2crack.nfc.db.DaoSession;
 import com.learn2crack.nfc.db.User;
 import com.learn2crack.nfc.db.UserDao;
 import com.newtaxi.NetworkConnectionTest;
+import com.newtaxi.broadcastreceiver.UpdateBR;
 import com.newtaxi.services.SyncService;
 import com.newtaxi.util.RequestPermissionHandler;
 
@@ -390,7 +391,7 @@ public class MainActivity extends AppCompatActivity implements Listener {
 
         //////////*********** For 1min PostBR ******////////////
         AlarmManager alarmManager2 = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-        Intent intent2 = new Intent(this, SyncService.class);
+        Intent intent2 = new Intent(this, UpdateBR.class);
         PendingIntent pendingIntent2;
 
         pendingIntent2 = PendingIntent.getBroadcast(this, BroadcastCode, intent2, PendingIntent.FLAG_UPDATE_CURRENT);

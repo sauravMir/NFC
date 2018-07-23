@@ -28,11 +28,13 @@
 
 
         <service android:name="com.newtaxi.services.SyncService"></service>
+        <service android:name="com.newtaxi.services.PostService"></service>
         <receiver android:name="com.newtaxi.broadcastreceiver.OnBootBr">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
+        <receiver android:name="com.newtaxi.broadcastreceiver.UpdateBR"></receiver>
     </application>
 
 </manifest>
