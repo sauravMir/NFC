@@ -21,6 +21,7 @@ public class MyGenerator {
 
     private static void addTables(final Schema schema) {
         addUserEntities(schema);
+        addSyncEntities(schema);
         // addPhonesEntities(schema);
     }
 
@@ -33,6 +34,20 @@ public class MyGenerator {
         user.addIntProperty("ride_left");
 
         return user;
+    }
+
+    // This is use to describe the colums of your table
+    private static Entity addSyncEntities(final Schema schema) {
+        Entity Scheduler = schema.addEntity("Scheduler");
+        Scheduler.addIdProperty().primaryKey().autoincrement();
+        Scheduler.addStringProperty("nfc_id").notNull();
+        Scheduler.addStringProperty("phone_number");
+        //0=in que, 1=progeressing, 2=done
+        Scheduler.addIntProperty("progress");
+        Scheduler.addIntProperty("type");
+        Scheduler.addDateProperty("createdAt").notNull();
+
+        return Scheduler;
     }
 
 

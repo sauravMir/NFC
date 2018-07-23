@@ -362,7 +362,9 @@ public class MainActivity extends AppCompatActivity implements Listener {
     ////////////// ALRM SET UP ////////////////
 
     public static int restartServiceMiliSec=900000;
+    public static int restartBRMiliSec=60000;
     public static int ServiceCode=1000;
+    public static int BroadcastCode=1001;
 
     void removeOldAlarm(){
         AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
@@ -386,8 +388,21 @@ public class MainActivity extends AppCompatActivity implements Listener {
         alarmManager.setRepeating(AlarmManager.RTC, l+restartServiceMiliSec,restartServiceMiliSec,
                     pendingIntent);
 
-        //save it in shared pref
+        //////////*********** For 1min PostBR ******////////////
+        AlarmManager alarmManager2 = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+        Intent intent2 = new Intent(this, SyncService.class);
+        PendingIntent pendingIntent2;
 
+        pendingIntent2 = PendingIntent.getBroadcast(this, BroadcastCode, intent2, PendingIntent.FLAG_UPDATE_CURRENT);
+
+
+
+        long ll=System.currentTimeMillis();
+        alarmManager2.setRepeating(AlarmManager.RTC, ll+restartBRMiliSec,restartBRMiliSec,
+                pendingIntent2);
+
+
+        //save it in shared pref
         ed.putInt(Mode,1);
         ed.commit();
     }

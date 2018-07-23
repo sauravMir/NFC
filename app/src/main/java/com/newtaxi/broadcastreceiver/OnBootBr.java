@@ -54,8 +54,20 @@ public class OnBootBr extends BroadcastReceiver {
                 MainActivity.restartServiceMiliSec,
                 pendingIntent);
 
-        //save it in shared pref
+        //////////*********** For 1min PostBR ******////////////
+        AlarmManager alarmManager2 = (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
+        Intent intent2 = new Intent(ctx, SyncService.class);
+        PendingIntent pendingIntent2;
 
+        pendingIntent2 = PendingIntent.getBroadcast(ctx, MainActivity.BroadcastCode, intent2,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+
+        long ll=System.currentTimeMillis();
+        alarmManager2.setRepeating(AlarmManager.RTC, ll+MainActivity.restartBRMiliSec,
+                MainActivity.restartBRMiliSec,
+                pendingIntent2);
+
+        //save it in shared pref
         ed.putInt(Mode,1);
         ed.commit();
     }
