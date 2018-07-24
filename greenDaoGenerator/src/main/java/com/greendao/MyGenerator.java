@@ -45,7 +45,7 @@ public class MyGenerator {
         //0=in que, 1=progeressing, 2=done
         Scheduler.addIntProperty("progress");
         Scheduler.addIntProperty("type");
-        Scheduler.addDateProperty("createdAt").notNull();
+        //Scheduler.addDateProperty("createdAt").notNull();
 
         return Scheduler;
     }

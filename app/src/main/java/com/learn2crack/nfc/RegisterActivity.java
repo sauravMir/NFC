@@ -18,6 +18,7 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.learn2crack.nfc.db.DaoSession;
+import com.learn2crack.nfc.db.Scheduler;
 import com.learn2crack.nfc.db.User;
 import com.learn2crack.nfc.db.UserDao;
 import com.newtaxi.NetworkConnectionTest;
@@ -35,7 +36,7 @@ public class RegisterActivity extends Activity {
     Button submit_bt;
     public static int RideLeft_MAX=30;
     DaoSession sessionDao;
-    ProgressDialog pd;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,13 +46,7 @@ public class RegisterActivity extends Activity {
         submit_bt.setOnClickListener(view->submitPressed(view));
         et_phone=(EditText) findViewById(R.id.editTextPhone);
 
-        //setTitle("Registration");
-        //set
-
         sessionDao=((AppController) getApplication()).getDaoSession();
-        pd=new ProgressDialog(this);
-        pd.setTitle("Please Wait...");
-        pd.setCancelable(false);
 
     }
 
@@ -67,8 +62,20 @@ public class RegisterActivity extends Activity {
         if(validityCheck()){
             //call volley
             if(NetworkConnectionTest.isNetworkConnected(RegisterActivity.this)){
-                pd.show();
-                syncproject(et_phone.getText().toString(), nfcId);
+
+                //syncproject(et_phone.getText().toString(), nfcId);
+
+                User u= new User();
+                u.insertItem(nfcId,et_phone.getText().toString(), RideLeft_MAX,sessionDao);
+
+                //PLAN SCHEDULER
+                Scheduler schedule=new Scheduler();
+                //TYPE::::booking=1, registration=0
+                schedule.insertItem(nfcId,et_phone.getText().toString(),0,0,sessionDao);
+                Intent in=new Intent(RegisterActivity.this, MainActivity.class);
+                startActivity(in);
+                finish();
+
             }else{
                 makeToast("No Internet Connection");
             }
@@ -78,44 +85,44 @@ public class RegisterActivity extends Activity {
     }
 
     //////// NETWORK CALLS ////////////////////////
-    public void syncproject(String phone, String nfcId){
-        String url = "http://hpmd.cayaconstructs.com/data/registration?phone_number="+phone+"&nfc_id="+nfcId;
-
-        JsonObjectRequest jsonRequest = new JsonObjectRequest
-                (Request.Method.GET, url, null, new Response.Listener<JSONObject>()  {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        // the response is already constructed as a JSONArray!
-                        if (response != null){
-                            makeToast("Successfully registered");
-
-                            UserDao ud=sessionDao.getUserDao();
-                            User u= new User();
-                            u.insertItem(nfcId,phone, RideLeft_MAX,sessionDao);
-
-
-                            //send for registration
-                            Intent in=new Intent(RegisterActivity.this, MainActivity.class);
-                            startActivity(in);
-                            finish();
-
-                        }else{
-                            makeToast("Could not register");
-                        }
-
-                        pd.dismiss();
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        error.printStackTrace();
-                        pd.dismiss();
-                    }
-                });
-
-        Volley.newRequestQueue(this).add(jsonRequest);
-    }
+//    public void syncproject(String phone, String nfcId){
+//        String url = "http://hpmd.cayaconstructs.com/data/registration?phone_number="+phone+"&nfc_id="+nfcId;
+//
+//        JsonObjectRequest jsonRequest = new JsonObjectRequest
+//                (Request.Method.GET, url, null, new Response.Listener<JSONObject>()  {
+//                    @Override
+//                    public void onResponse(JSONObject response) {
+//                        // the response is already constructed as a JSONArray!
+//                        if (response != null){
+//                            makeToast("Successfully registered");
+//
+//                            UserDao ud=sessionDao.getUserDao();
+//                            User u= new User();
+//                            u.insertItem(nfcId,phone, RideLeft_MAX,sessionDao);
+//
+//
+//                            //send for registration
+//                            Intent in=new Intent(RegisterActivity.this, MainActivity.class);
+//                            startActivity(in);
+//                            finish();
+//
+//                        }else{
+//                            makeToast("Could not register");
+//                        }
+//
+//                     //   pd.dismiss();
+//                    }
+//                }, new Response.ErrorListener() {
+//
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        error.printStackTrace();
+//                        pd.dismiss();
+//                    }
+//                });
+//
+//        Volley.newRequestQueue(this).add(jsonRequest);
+//    }
 
     void makeToast(String str){
         Toast.makeText(this,str, Toast.LENGTH_LONG).show();

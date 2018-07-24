@@ -34,6 +34,7 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.learn2crack.nfc.db.DaoSession;
+import com.learn2crack.nfc.db.Scheduler;
 import com.learn2crack.nfc.db.User;
 import com.learn2crack.nfc.db.UserDao;
 import com.newtaxi.NetworkConnectionTest;
@@ -74,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements Listener {
 
     RequestPermissionHandler reqperm;
     boolean blockUI_ifNoPer=true;
-    ProgressDialog pd;
+    //ProgressDialog pd;
     SharedPreferences sp;
     SharedPreferences.Editor ed;
     final String Pref="pref";
@@ -104,9 +105,7 @@ public class MainActivity extends AppCompatActivity implements Listener {
         resetServiceAlarm();
 
 
-        pd=new ProgressDialog(this);
-        pd.setTitle("Please Wait...");
-        pd.setCancelable(false);
+
 
 //        UserDao ud=sessionDao.getUserDao();
 //        List<User> items = ud.queryRaw("where nfc_id=?","1101");
@@ -218,33 +217,33 @@ public class MainActivity extends AppCompatActivity implements Listener {
 
 
             //////////// NETWORL CALL///////////////////
-    public void bookingSync( String nfcId){
-        String url = "http://hpmd.cayaconstructs.com/data/booking?nfc_id="+nfcId;
-
-        JsonObjectRequest jsonRequest = new JsonObjectRequest
-                (Request.Method.GET, url, null, new Response.Listener<JSONObject>()  {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        // the response is already constructed as a JSONArray!
-                        if (response != null){
-                            makeToast("Booking Successful");
-                        }else{
-                            makeToast("Could not register");
-                        }
-
-                        pd.dismiss();
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        error.printStackTrace();
-                        pd.dismiss();
-                    }
-                });
-
-        Volley.newRequestQueue(this).add(jsonRequest);
-    }
+//    public void bookingSync( String nfcId){
+//        String url = "http://hpmd.cayaconstructs.com/data/booking?nfc_id="+nfcId;
+//
+//        JsonObjectRequest jsonRequest = new JsonObjectRequest
+//                (Request.Method.GET, url, null, new Response.Listener<JSONObject>()  {
+//                    @Override
+//                    public void onResponse(JSONObject response) {
+//                        // the response is already constructed as a JSONArray!
+//                        if (response != null){
+//                            makeToast("Booking Successful");
+//                        }else{
+//                            makeToast("Could not register");
+//                        }
+//
+//                       // pd.dismiss();
+//                    }
+//                }, new Response.ErrorListener() {
+//
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        error.printStackTrace();
+//                        //pd.dismiss();
+//                    }
+//                });
+//
+//        Volley.newRequestQueue(this).add(jsonRequest);
+//    }
 
 
     protected void startNfcSettingsActivity() {
@@ -331,9 +330,15 @@ public class MainActivity extends AppCompatActivity implements Listener {
                         if(u.getRide_left()>0){
                             u.setRide_left(u.getRide_left()-1);
                             u.updateItem(u,sessionDao);
-                            pd.show();
                             makeToast("Rides Left: "+String.valueOf(u.getRide_left()));
-                            bookingSync(u.getNfc_id());
+                            //bookingSync(u.getNfc_id());
+
+                            //PLAN SCHEDULER
+                            Scheduler schedule=new Scheduler();
+                            //booking=1
+                            schedule.insertItem(u.getNfc_id(),u.getPhone_number(),1,0,sessionDao);
+
+
                         }else{
                             makeToast("Please Recharge No Rides Left");
                         }
@@ -363,7 +368,7 @@ public class MainActivity extends AppCompatActivity implements Listener {
     ////////////// ALRM SET UP ////////////////
 
     public static int restartServiceMiliSec=900000;
-    public static int restartBRMiliSec=60000;
+    public static int restartBRMiliSec=10000;//60000;
     public static int ServiceCode=1000;
     public static int BroadcastCode=1001;
 

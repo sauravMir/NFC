@@ -27,7 +27,6 @@ public class SchedulerDao extends AbstractDao<Scheduler, Long> {
         public final static Property Phone_number = new Property(2, String.class, "phone_number", false, "PHONE_NUMBER");
         public final static Property Progress = new Property(3, Integer.class, "progress", false, "PROGRESS");
         public final static Property Type = new Property(4, Integer.class, "type", false, "TYPE");
-        public final static Property CreatedAt = new Property(5, java.util.Date.class, "createdAt", false, "CREATED_AT");
     }
 
 
@@ -47,8 +46,7 @@ public class SchedulerDao extends AbstractDao<Scheduler, Long> {
                 "\"NFC_ID\" TEXT NOT NULL ," + // 1: nfc_id
                 "\"PHONE_NUMBER\" TEXT," + // 2: phone_number
                 "\"PROGRESS\" INTEGER," + // 3: progress
-                "\"TYPE\" INTEGER," + // 4: type
-                "\"CREATED_AT\" INTEGER NOT NULL );"); // 5: createdAt
+                "\"TYPE\" INTEGER);"); // 4: type
     }
 
     /** Drops the underlying database table. */
@@ -81,7 +79,6 @@ public class SchedulerDao extends AbstractDao<Scheduler, Long> {
         if (type != null) {
             stmt.bindLong(5, type);
         }
-        stmt.bindLong(6, entity.getCreatedAt().getTime());
     }
 
     @Override
@@ -108,7 +105,6 @@ public class SchedulerDao extends AbstractDao<Scheduler, Long> {
         if (type != null) {
             stmt.bindLong(5, type);
         }
-        stmt.bindLong(6, entity.getCreatedAt().getTime());
     }
 
     @Override
@@ -123,8 +119,7 @@ public class SchedulerDao extends AbstractDao<Scheduler, Long> {
             cursor.getString(offset + 1), // nfc_id
             cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // phone_number
             cursor.isNull(offset + 3) ? null : cursor.getInt(offset + 3), // progress
-            cursor.isNull(offset + 4) ? null : cursor.getInt(offset + 4), // type
-            new java.util.Date(cursor.getLong(offset + 5)) // createdAt
+            cursor.isNull(offset + 4) ? null : cursor.getInt(offset + 4) // type
         );
         return entity;
     }
@@ -136,7 +131,6 @@ public class SchedulerDao extends AbstractDao<Scheduler, Long> {
         entity.setPhone_number(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
         entity.setProgress(cursor.isNull(offset + 3) ? null : cursor.getInt(offset + 3));
         entity.setType(cursor.isNull(offset + 4) ? null : cursor.getInt(offset + 4));
-        entity.setCreatedAt(new java.util.Date(cursor.getLong(offset + 5)));
      }
     
     @Override
