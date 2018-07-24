@@ -99,6 +99,21 @@ public class Scheduler {
     }
 
     // KEEP METHODS - put your custom methods here
+    public void updateItem(Scheduler u, DaoSession daoSession){
+        SchedulerDao scDao = daoSession.getSchedulerDao();
+
+        scDao.update(u);
+    }
+
+    public void insertItem(String nfc_id ,String phone, int type, int progress, DaoSession daoSession){
+        SchedulerDao usDao = daoSession.getSchedulerDao();
+        Scheduler u = new Scheduler();
+        u.setNfc_id(nfc_id);
+        u.setPhone_number(phone);
+        u.setType(type);
+        u.setProgress(progress);
+        usDao.insert(u);
+    }
     // KEEP METHODS END
 
 }
